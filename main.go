@@ -15,17 +15,23 @@ var fields [][]string
 var fieldTypes = make([]map[string]string, 0)
 var sqlTables = make([]string, 0)
 
-func guessType(s string) string {
-	m, err := regexp.MatchString(`[[:alpha:]]`, s)
-	fmt.Println("checking string: ", s)
+// GuessType infers the column type based on regexes
+func GuessType(s string) string {
+	integersOnly, err := regexp.MatchString(`$\d^`, s)
+	dateOnly, err := regexp.MatchString(`\d+-`, s)
+	timeStampWithoutTZ, err := regexp.MatchString(``, s)
+	fmt.Println("integersOnly", integersOnly, s)
+	fmt.Println("dateOnly", dateOnly, s)
+	fmt.Println("timestampWithoutTZ", timeStampWithoutTZ, s)
 	if err == nil {
-		fmt.Println(m)
 		// true if it contains A-Za-z
 		// false if it contains only numbers
 		// if false, make integer type
 		// if true, TEXT
-		if m == false {
+		if integersOnly {
 			return "INT"
+		} else if dateOnly {
+			return "DATE"
 		}
 	}
 	return "TEXT"
@@ -36,23 +42,35 @@ func getTableName(filename string) string {
 	return strings.ToLower(name[0])
 }
 
+func columnParse(c string) string {
+	var splitter = make([]string, 0)
+	if strings.Contains(c, "-") {
+		splitter = strings.Split(c, "-")
+	} else if strings.Contains(c, " ") {
+		splitter = strings.Split(c, " ")
+	} else {
+		return c
+	}
+
+	return strings.Join(splitter, "_")
+
+}
+
 func buildTable(fieldTypes []map[string]string) string {
 	sqlTables = append(sqlTables, "CREATE TABLE")
 	sqlTables = append(sqlTables, getTableName(filePath)+"(")
 
 	for i, f := range fieldTypes {
-		fmt.Printf("%v\n", f)
 		for k, v := range f {
 			if i < len(fieldTypes)-1 {
-				sqlTables = append(sqlTables, k+" "+v+",")
+				sqlTables = append(sqlTables, columnParse(k)+" "+v+",")
 			} else {
-				sqlTables = append(sqlTables, k+" "+v)
+				sqlTables = append(sqlTables, columnParse(k)+" "+v)
 			}
 		}
 	}
 
 	sqlTables = append(sqlTables, ");\n")
-	fmt.Printf("%T %v\n", sqlTables, sqlTables)
 	return strings.Join(sqlTables, " ")
 }
 
@@ -80,9 +98,6 @@ func buildWholeFile(fields [][]string, fieldTypes []map[string]string) {
 			sqlRowString += buildInsert(value)
 		}
 	}
-
-	fmt.Println(sqlTableString)
-	fmt.Println(sqlRowString)
 
 	sqlFile, err := os.Create(getTableName(filePath) + ".sql")
 	if err == nil {
@@ -129,7 +144,6 @@ func readLineIntoString(f string) (err error) {
 		line := buffer.String()
 		lineWords := strings.Split(line, ",")
 
-		fmt.Printf("%v\n", lineWords)
 		fields = append(fields, lineWords)
 		i++
 	}
@@ -139,12 +153,11 @@ func readLineIntoString(f string) (err error) {
 	}
 
 	for i := range fields[0] {
-		fieldType := guessType(fields[1][i])
+		fieldType := GuessType(fields[1][i])
 		fm := make(map[string]string)
 		fm[fields[0][i]] = fieldType
 		fieldTypes = append(fieldTypes, fm)
 	}
-	fmt.Println(fieldTypes)
 
 	return
 }
@@ -152,6 +165,4 @@ func readLineIntoString(f string) (err error) {
 func main() {
 	readLineIntoString(filePath)
 	buildWholeFile(fields, fieldTypes)
-
-	// print(fields[0])
 }
