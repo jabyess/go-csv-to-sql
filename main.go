@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 )
@@ -17,12 +18,12 @@ var sqlTables = make([]string, 0)
 
 // GuessType infers the column type based on regexes
 func GuessType(s string) string {
-	integersOnly, err := regexp.MatchString(`$\d^`, s)
-	dateOnly, err := regexp.MatchString(`\d+-`, s)
-	timeStampWithoutTZ, err := regexp.MatchString(``, s)
-	fmt.Println("integersOnly", integersOnly, s)
-	fmt.Println("dateOnly", dateOnly, s)
-	fmt.Println("timestampWithoutTZ", timeStampWithoutTZ, s)
+	integersOnly, err := regexp.MatchString(`^\d*$`, s)
+	dateOnly, err := regexp.MatchString(`\d{4}-\d{2}-\d{2}$`, s)
+	timeStampWithoutTZ, err := regexp.MatchString(`\d{4}-\d{2}-|\d{2}\s\d{2}\:\d{2}\:\d{2}`, s)
+	// fmt.Println("integersOnly", integersOnly, s)
+	// fmt.Println("dateOnly", dateOnly, s)
+	// fmt.Println("timestampWithoutTZ", timeStampWithoutTZ, s)
 	if err == nil {
 		// true if it contains A-Za-z
 		// false if it contains only numbers
@@ -32,13 +33,15 @@ func GuessType(s string) string {
 			return "INT"
 		} else if dateOnly {
 			return "DATE"
+		} else if timeStampWithoutTZ {
+			return "TIMESTAMP"
 		}
 	}
 	return "TEXT"
 }
 
 func getTableName(filename string) string {
-	name := strings.Split(filename, ".")
+	name := strings.Split(path.Clean(filename), ".")
 	return strings.ToLower(name[0])
 }
 
@@ -99,14 +102,29 @@ func buildWholeFile(fields [][]string, fieldTypes []map[string]string) {
 		}
 	}
 
+	fmt.Println(filePath)
 	sqlFile, err := os.Create(getTableName(filePath) + ".sql")
+	fmt.Printf("%v\n", sqlFile)
 	if err == nil {
 		sqlFile.WriteString(sqlTableString)
 		sqlFile.WriteString(sqlRowString)
 	}
 }
 
+// GuessFieldTypes runs GuessType
+func GuessFieldTypes(fields []string) []map[string]string {
+	ft := make([]map[string]string, 0)
+	for i := range fields {
+		fieldType := GuessType(fields[i])
+		fm := make(map[string]string)
+		fm[fields[i]] = fieldType
+		ft = append(ft, fm)
+	}
+	return ft
+}
+
 func readLineIntoString(f string) (err error) {
+	fmt.Println("reading file:", f)
 
 	file, err := os.Open(f)
 	defer file.Close()
@@ -148,15 +166,12 @@ func readLineIntoString(f string) (err error) {
 		i++
 	}
 
+	fieldTypes = GuessFieldTypes(fields[0])
+
+	fmt.Println(fieldTypes)
+
 	if err != io.EOF {
 		fmt.Printf(" > Failed: %v \n", err)
-	}
-
-	for i := range fields[0] {
-		fieldType := GuessType(fields[1][i])
-		fm := make(map[string]string)
-		fm[fields[0][i]] = fieldType
-		fieldTypes = append(fieldTypes, fm)
 	}
 
 	return
