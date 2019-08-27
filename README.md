@@ -30,6 +30,17 @@ Parses and writes:
 ## Todo
 
 * sanitize filename for sql standards (no `-` or special chars)
+* Generating one insert statement per row is really slow to run. Is there a more efficient way/syntax? Yes. 1000 at a time.
+
+```sql
+INSERT INTO table_name
+  values (
+    ...
+  ), 
+  values(
+    ...
+  )
+```
 
 * Add support for more datatypes in psql
   * different dates
