@@ -29,10 +29,11 @@ Parses and writes:
 
 ## Todo
 
-Add support for more datatypes in psql
+* sanitize filename for sql standards (no `-` or special chars)
 
-* different dates
-* bool
-* enumerated types?
-* floats vs integers
+* Add support for more datatypes in psql
+  * different dates
+  * bool
+  * enumerated types?
+  * floats vs integers
 
