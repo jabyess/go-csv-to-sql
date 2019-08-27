@@ -9,12 +9,10 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var filePath = os.Args[1]
-var fields [][]string
-var fieldTypes = make([]map[string]string, 0)
-var sqlTables = make([]string, 0)
 
 // GuessType infers the column type based on regexes
 func GuessType(s string) string {
@@ -25,10 +23,6 @@ func GuessType(s string) string {
 	// fmt.Println("dateOnly", dateOnly, s)
 	// fmt.Println("timestampWithoutTZ", timeStampWithoutTZ, s)
 	if err == nil {
-		// true if it contains A-Za-z
-		// false if it contains only numbers
-		// if false, make integer type
-		// if true, TEXT
 		if integersOnly {
 			return "INT"
 		} else if dateOnly {
@@ -60,6 +54,7 @@ func columnParse(c string) string {
 }
 
 func buildTable(fieldTypes []map[string]string) string {
+	sqlTables := make([]string, 0)
 	sqlTables = append(sqlTables, "CREATE TABLE")
 	sqlTables = append(sqlTables, getTableName(filePath)+"(")
 
@@ -91,39 +86,24 @@ func buildInsert(fieldValues []string) string {
 	return sqlRow
 }
 
-func buildWholeFile(fields [][]string, fieldTypes []map[string]string) {
-
-	sqlTableString := buildTable(fieldTypes)
-	var sqlRowString string
-
-	for i, value := range fields {
-		if i > 0 {
-			sqlRowString += buildInsert(value)
-		}
-	}
-
-	fmt.Println(filePath)
-	sqlFile, err := os.Create(getTableName(filePath) + ".sql")
-	fmt.Printf("%v\n", sqlFile)
-	if err == nil {
-		sqlFile.WriteString(sqlTableString)
-		sqlFile.WriteString(sqlRowString)
-	}
+func writeToFile(row string, file *os.File) {
+	file.WriteString(row)
 }
 
-// GuessFieldTypes runs GuessType
-func GuessFieldTypes(fields []string) []map[string]string {
+// GuessFieldTypes runs GuessType on each item in slice
+func GuessFieldTypes(headers []string, fields []string) []map[string]string {
 	ft := make([]map[string]string, 0)
+
 	for i := range fields {
 		fieldType := GuessType(fields[i])
 		fm := make(map[string]string)
-		fm[fields[i]] = fieldType
+		fm[headers[i]] = fieldType
 		ft = append(ft, fm)
 	}
 	return ft
 }
 
-func readLineIntoString(f string) (err error) {
+func readLineIntoString(f string, ch chan string) (err error) {
 	fmt.Println("reading file:", f)
 
 	file, err := os.Open(f)
@@ -134,13 +114,11 @@ func readLineIntoString(f string) (err error) {
 	}
 
 	reader := bufio.NewReader(file)
-	// var firstLine = true
 
 	for {
 		var buffer bytes.Buffer
 		var l []byte
 		var isPrefix bool
-		var i = 0
 
 		for {
 			l, isPrefix, err = reader.ReadLine()
@@ -160,24 +138,62 @@ func readLineIntoString(f string) (err error) {
 		}
 
 		line := buffer.String()
-		lineWords := strings.Split(line, ",")
 
-		fields = append(fields, lineWords)
-		i++
+		ch <- line
 	}
-
-	fieldTypes = GuessFieldTypes(fields[0])
-
-	fmt.Println(fieldTypes)
 
 	if err != io.EOF {
 		fmt.Printf(" > Failed: %v \n", err)
 	}
 
+	close(ch)
+
 	return
 }
 
+func parseLineIntoValues(line string, ind int) string {
+	var row string
+
+	if ind == 1 {
+		vals := strings.Split(line, "\n")
+		headers := strings.Split(vals[0], ",")
+		firstRow := strings.Split(vals[1], ",")
+		fieldTypes := GuessFieldTypes(headers, firstRow)
+		row = buildTable(fieldTypes) + buildInsert(firstRow)
+	}
+	if ind > 1 {
+		vals := strings.Split(line, ",")
+		row = buildInsert(vals)
+	}
+	return row
+}
+
 func main() {
-	readLineIntoString(filePath)
-	buildWholeFile(fields, fieldTypes)
+	start := time.Now()
+	lineChan := make(chan string, 1000)
+	ind := 0
+	var headers string
+	var row string
+
+	go readLineIntoString(filePath, lineChan)
+
+	sqlFile, err := os.Create(getTableName(filePath) + ".sql")
+
+	if err == nil {
+		for line := range lineChan {
+			if ind < 2 {
+				headers += line + "\n"
+				if ind == 1 {
+					row = parseLineIntoValues(headers, ind)
+				}
+			} else {
+				row = parseLineIntoValues(line, ind)
+			}
+			writeToFile(row, sqlFile)
+			ind++
+		}
+	}
+
+	end := time.Now()
+	fmt.Printf("Wrote %v lines to file in %v\n", ind+1, end.Sub(start))
 }
