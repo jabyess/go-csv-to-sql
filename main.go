@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -16,22 +15,24 @@ var filePath = os.Args[1]
 
 // GuessType infers the column type based on regexes
 func GuessType(s string) string {
-	integersOnly, err := regexp.MatchString(`^\d*$`, s)
-	dateOnly, err := regexp.MatchString(`\d{4}-\d{2}-\d{2}$`, s)
-	timeStampWithoutTZ, err := regexp.MatchString(`\d{4}-\d{2}-|\d{2}\s\d{2}\:\d{2}\:\d{2}`, s)
-	// fmt.Println("integersOnly", integersOnly, s)
-	// fmt.Println("dateOnly", dateOnly, s)
-	// fmt.Println("timestampWithoutTZ", timeStampWithoutTZ, s)
-	if err == nil {
-		if integersOnly {
-			return "INT"
-		} else if dateOnly {
-			return "DATE"
-		} else if timeStampWithoutTZ {
-			return "TIMESTAMP"
-		}
-	}
-	return "TEXT"
+	colType := Parse(s)
+
+	// integersOnly, err := regexp.MatchString(`^\d*$`, s)
+	// dateOnly, err := regexp.MatchString(`\d{4}-\d{2}-\d{2}$`, s)
+	// timeStampWithoutTZ, err := regexp.MatchString(`\d{4}-\d{2}-|\d{2}\s\d{2}\:\d{2}\:\d{2}`, s)
+	// // fmt.Println("integersOnly", integersOnly, s)
+	// // fmt.Println("dateOnly", dateOnly, s)
+	// // fmt.Println("timestampWithoutTZ", timeStampWithoutTZ, s)
+	// if err == nil {
+	// 	if integersOnly {
+	// 		return "INT"
+	// 	} else if dateOnly {
+	// 		return "DATE"
+	// 	} else if timeStampWithoutTZ {
+	// 		return "TIMESTAMP"
+	// 	}
+	// }
+	return colType
 }
 
 func getTableName(filename string) string {
