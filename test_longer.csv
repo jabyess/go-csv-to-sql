@@ -1,0 +1,5 @@
+start_date,end_date,some_value,true or false,spaces column,header,endrow
+2015-10-01,2016-01-19 04:05:06,value03,true,value is 5,hvalue,endvalue
+2015-10-01,2016-01-19 04:05:06,value13,false,value is 15,hvalue,endvalue
+2015-10-01,2016-01-19 04:05:06,value23,true,value is 25,hvalue,endvalue
+2015-10-01,2016-01-19 04:05:06,value33,false,value is 35 or something,hvalue,endvalue

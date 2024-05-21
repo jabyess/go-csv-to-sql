@@ -108,11 +108,12 @@ func readLineIntoString(f string, ch chan string) (err error) {
 	fmt.Println("reading file:", f)
 
 	file, err := os.Open(f)
-	defer file.Close()
 
 	if err != nil {
 		return err
 	}
+
+	defer file.Close()
 
 	reader := bufio.NewReader(file)
 
@@ -176,7 +177,7 @@ func main() {
 	var headers string
 	var row string
 
-	go readLineIntoString(filePath, lineChan)
+	readLineIntoString(filePath, lineChan)
 
 	sqlFile, err := os.Create(getTableName(filePath) + ".sql")
 

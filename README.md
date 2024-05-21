@@ -4,7 +4,7 @@ Converts CSV files to SQL scripts. Pet project to learn go, built at recurse dur
 
 ## Usage
 
-`go run main.go file.csv`
+`go run . file.csv`
 
 ## Notes
 
@@ -47,4 +47,5 @@ INSERT INTO table_name
   * bool
   * enumerated types?
   * floats vs integers
+* detect duplicate column headers
 
