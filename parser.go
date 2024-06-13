@@ -75,7 +75,7 @@ func Parse(s string) string {
 
 func determineNumType(nums [][]int) (string, error) {
 
-	fmt.Println("nums:", nums)
+	// fmt.Println("nums:", nums)
 
 	if len(nums) > 3 {
 		return "timestamp", nil
@@ -87,7 +87,7 @@ func determineNumType(nums [][]int) (string, error) {
 }
 
 func determineStringType(words [][]string) (string, error) {
-	fmt.Println("words:", words)
+	// fmt.Println("words:", words)
 
 	if len(words) > 0 {
 		return "TEXT", nil
@@ -328,12 +328,12 @@ func startParse(baseSplit []string, wordMatches [][]string, numMatches [][]int) 
 
 	}
 
-	for _, word := range wordMatches {
-		fmt.Println("word:", word)
-	}
-	for _, num := range numMatches {
-		fmt.Println("num:", num)
-	}
+	// for _, word := range wordMatches {
+	// 	fmt.Println("word:", word)
+	// }
+	// for _, num := range numMatches {
+	// 	fmt.Println("num:", num)
+	// }
 
 	return wordMatches, numMatches
 }
