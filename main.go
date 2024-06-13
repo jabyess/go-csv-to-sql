@@ -7,9 +7,8 @@ import (
 	"time"
 )
 
-var filePath = os.Args[1]
-
 func main() {
+	filePath := os.Args[1]
 	start := time.Now()
 	lineChan := make(chan string)
 	lineIndex := 0
