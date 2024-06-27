@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"path"
@@ -73,9 +72,9 @@ func GuessFieldTypes(headers []string, fields []string) []map[string]string {
 	return fieldTypes
 }
 
-func ParseLineIntoValues(line string, lineIndex int) string {
+func ParseLineIntoValues(line string, lineIndex int, allColumnMeta []main.ColumnMeta) string {
 	var row string
-	fmt.Println(lineIndex, line)
+	// fmt.Println(lineIndex, line)
 
 	if lineIndex == 1 {
 		vals := strings.Split(line, "\n")

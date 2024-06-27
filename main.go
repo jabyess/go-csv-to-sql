@@ -16,6 +16,14 @@ func main() {
 	lineIndex := 0
 	var headers string
 
+	type ColumnMeta struct {
+		columnIndex int
+		sqlType     string
+		transforms  *[]string
+	}
+
+	var allColumnMeta []ColumnMeta
+
 	// read line by line using a channel
 	go ReadLineIntoString(filePath, lineChan)
 
@@ -29,14 +37,14 @@ func main() {
 	for line := range lineChan {
 		var row string
 
-		fmt.Println("--", lineIndex, line)
+		// fmt.Println("--", lineIndex, line)
 		if lineIndex == 0 {
 			headers += line + "\n"
 		} else if lineIndex == 1 {
 			headers += line + "\n"
-			row = ParseLineIntoValues(headers, lineIndex)
+			row = ParseLineIntoValues(headers, lineIndex, allColumnMeta)
 		} else if lineIndex > 1 {
-			row = ParseLineIntoValues(line, lineIndex)
+			row = ParseLineIntoValues(line, lineIndex, allColumnMeta)
 		}
 		sqlFile.WriteString(row)
 		lineIndex++
