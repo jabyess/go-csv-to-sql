@@ -2,3 +2,4 @@
 !test.csv
 *.sql
 *.csv
+*.vscode

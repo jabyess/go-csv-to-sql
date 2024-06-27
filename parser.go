@@ -49,7 +49,11 @@ func addToWordMatch(wordMatches [][]string, index int, s string) [][]string {
 	return wordMatches
 }
 
-// Parse is the main function that sets up the parser
+/*
+Parse is the main function that sets up the parser. it takes in a single string,
+in this case, one of the values from the second line of the provided csv file
+and tries to infer its type
+*/
 func Parse(s string) string {
 
 	baseSplit := strings.Split(s, "")
@@ -58,6 +62,8 @@ func Parse(s string) string {
 	matches := matches{wordMatches, numMatches}
 
 	wMatches, nMatches := startParse(baseSplit, matches.wordMatches, matches.numMatches)
+
+	fmt.Println("word, num matches", wMatches, nMatches)
 
 	numType, numErr := determineNumType(nMatches)
 	wordType, wordErr := determineStringType(wMatches)
@@ -83,17 +89,21 @@ func determineNumType(nums [][]int) (string, error) {
 		return "date", nil
 	}
 
-	return "", errors.New("No valid number type")
+	return "", errors.New("no valid number type")
 }
 
 func determineStringType(words [][]string) (string, error) {
 	// fmt.Println("words:", words)
 
 	if len(words) > 0 {
-		return "TEXT", nil
+
+		// if words == "false" {
+		// 	return "BOOL", nil
+		// }
+		return "text", nil
 	}
 
-	return "", errors.New("No valid word type")
+	return "", errors.New("no valid word type")
 
 }
 
@@ -105,6 +115,7 @@ func startParse(baseSplit []string, wordMatches [][]string, numMatches [][]int) 
 	var lastMatch string
 
 	for i, char := range baseSplit {
+		// why did i put 20 as a max value originally???
 		if i > 20 {
 			break
 		}

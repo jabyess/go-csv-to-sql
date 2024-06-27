@@ -7,8 +7,10 @@ import (
 	"time"
 )
 
+var filePath = os.Args[1]
+var tableName = GetTableName(filePath)
+
 func main() {
-	filePath := os.Args[1]
 	start := time.Now()
 	lineChan := make(chan string)
 	lineIndex := 0
@@ -18,7 +20,7 @@ func main() {
 	go ReadLineIntoString(filePath, lineChan)
 
 	// create the .sql file on disk using filename of csv
-	sqlFile, err := os.Create(GetTableName(filePath) + ".sql")
+	sqlFile, err := os.Create(tableName + ".sql")
 
 	if err != nil {
 		log.Fatal(err)
@@ -27,10 +29,13 @@ func main() {
 	for line := range lineChan {
 		var row string
 
-		if lineIndex == 1 {
+		fmt.Println("--", lineIndex, line)
+		if lineIndex == 0 {
+			headers += line + "\n"
+		} else if lineIndex == 1 {
 			headers += line + "\n"
 			row = ParseLineIntoValues(headers, lineIndex)
-		} else {
+		} else if lineIndex > 1 {
 			row = ParseLineIntoValues(line, lineIndex)
 		}
 		sqlFile.WriteString(row)

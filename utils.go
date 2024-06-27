@@ -62,25 +62,20 @@ func GetTableName(filename string) string {
 
 // GuessFieldTypes runs GuessType on each item in slice
 func GuessFieldTypes(headers []string, fields []string) []map[string]string {
-	ft := make([]map[string]string, 0)
+	fieldTypes := make([]map[string]string, 0)
 
 	for i := range fields {
-		fieldType := GuessType(fields[i])
-		fm := make(map[string]string)
-		fm[headers[i]] = fieldType
-		ft = append(ft, fm)
+		guessedType := Parse(fields[i])
+		fieldMapping := make(map[string]string)
+		fieldMapping[headers[i]] = guessedType
+		fieldTypes = append(fieldTypes, fieldMapping)
 	}
-	return ft
-}
-
-func GuessType(s string) string {
-	colType := Parse(s)
-
-	return colType
+	return fieldTypes
 }
 
 func ParseLineIntoValues(line string, lineIndex int) string {
 	var row string
+	fmt.Println(lineIndex, line)
 
 	if lineIndex == 1 {
 		vals := strings.Split(line, "\n")
@@ -102,7 +97,7 @@ func ReadLineIntoString(f string, ch chan string) (err error) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		fmt.Println(line)
+		// fmt.Println(line)
 		ch <- line
 	}
 
