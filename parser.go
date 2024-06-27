@@ -56,12 +56,11 @@ and tries to infer its type
 */
 func Parse(s string) string {
 
-	baseSplit := strings.Split(s, "")
 	var wordMatches [][]string
 	var numMatches [][]int
 	matches := matches{wordMatches, numMatches}
 
-	wMatches, nMatches := startParse(baseSplit, matches.wordMatches, matches.numMatches)
+	wMatches, nMatches := startParse(s, matches.wordMatches, matches.numMatches)
 
 	fmt.Println("word, num matches", wMatches, nMatches)
 
@@ -93,13 +92,16 @@ func determineNumType(nums [][]int) (string, error) {
 }
 
 func determineStringType(words [][]string) (string, error) {
-	// fmt.Println("words:", words)
 
 	if len(words) > 0 {
-
-		// if words == "false" {
-		// 	return "BOOL", nil
-		// }
+		// check for boolean type
+		for _, word := range words {
+			letters := strings.ToLower(strings.Join(word, ""))
+			if letters == "false" || letters == "true" {
+				return "boolean", nil
+			}
+		}
+		// default fallback to text type
 		return "text", nil
 	}
 
@@ -108,13 +110,14 @@ func determineStringType(words [][]string) (string, error) {
 }
 
 // StartParse begins parsing
-func startParse(baseSplit []string, wordMatches [][]string, numMatches [][]int) ([][]string, [][]int) {
+func startParse(s string, wordMatches [][]string, numMatches [][]int) ([][]string, [][]int) {
 
+	splitWord := strings.Split(s, "")
 	// wordCount := 0
 	numCount := 0
 	var lastMatch string
 
-	for i, char := range baseSplit {
+	for i, char := range splitWord {
 		// why did i put 20 as a max value originally???
 		if i > 20 {
 			break
